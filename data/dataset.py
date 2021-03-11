@@ -1,8 +1,8 @@
 import argparse
-from typing import Dict
 import warnings
+from typing import Dict
 
-warnings.simplefilter(action='ignore', category=Warning) # Not the best
+warnings.simplefilter(action='ignore', category=Warning)  # Not the best
 import pandas as pd
 from nltk.sentiment import SentimentIntensityAnalyzer
 
@@ -11,11 +11,18 @@ analyzer = SentimentIntensityAnalyzer()
 
 class ChunkProcesser(object):
 
-    def __init__(self, output_path: str, chunksize: int = 10 ** 6, min_comm_len: int = 16):
+    def __init__(
+            self,
+            output_path: str,
+            chunksize: int,
+            min_comm_len: int,
+            evenbins: bool
+    ):
         self.sentiment_analyzer = SentimentIntensityAnalyzer()
         self.output_path = output_path
         self.chunksize = chunksize
         self.min_comm_len = min_comm_len
+        self.evenbins = evenbins;
         self.desired_cols = ['body', 'gildings', 'subreddit']
         self.sentiment_cols = ['neg', 'neu', 'pos', 'compound']
         self.has_written = False
@@ -27,7 +34,8 @@ class ChunkProcesser(object):
     def _filter_chunk(self, chunk: pd.DataFrame) -> pd.DataFrame:
         """Filters comments within a chunk to meet requirements."""
         chunk.body = chunk.dropna().body.astype('str')
-        return chunk[chunk.body.map(lambda el: len(str(el))) >= self.min_comm_len]
+        return chunk[
+            chunk.body.map(lambda el: len(str(el))) >= self.min_comm_len]
 
     def _get_relevant_chunk_data(self, chunk: pd.DataFrame) -> pd.DataFrame:
         return chunk[self.desired_cols]
@@ -43,6 +51,13 @@ class ChunkProcesser(object):
             chunk.to_csv(self.output_path)
             self.has_written = True
 
+    def create_even_bins(self):
+        data = pd.read_csv(self.output_path)
+        data['bin'] = data['compound'].apply(
+            lambda val: -1 if val <= -0.333 else (0 if val < 0.333 else 1))
+        min_count = data.groupby(by='bin').count()['compound'].min()
+        data.groupby(by='bin').head(min_count).to_csv(self.output_path)
+
     def __call__(self, chunk: pd.DataFrame):
         rel_chunk = self._get_relevant_chunk_data(chunk)
         filtered_chunk = self._filter_chunk(rel_chunk)
@@ -54,22 +69,32 @@ class ChunkProcesser(object):
         self._save_chunk(filtered_chunk)
 
 
-def process_data(path: str, output_path: str, chunksize: int, comm_length: int):
-    processor = ChunkProcesser(output_path, min_comm_len=comm_length)
+def process_data(
+        path: str,
+        output_path: str,
+        chunksize: int,
+        comm_length: int,
+        evenbins: bool
+):
+    processor = ChunkProcesser(output_path, min_comm_len=comm_length,
+                               chunksize=chunksize, evenbins=evenbins)
     for (i, chunk) in enumerate(pd.read_csv(path, chunksize=chunksize)):
         processor(chunk)
         if i == 50:
-            exit()
+            break
+
+    if processor.evenbins:
+        processor.create_even_bins()
 
 
 def main():
     global args
     process_data(args.datapath, args.output_path, chunksize=args.chunksize,
-                 comm_length=args.comm_length)
+                 comm_length=args.comm_length, evenbins=args.evenbins)
 
 
 if __name__ == '__main__':
-    # Defaults generate ~50MB of data, 384K datapoints
+    # Defaults generate ~50MB of data, 384K datapoints without even binning
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--datapath', required=True,
                         help="Path to data file")
@@ -80,5 +105,8 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--comm_length', required=False, type=int,
                         default=16,
                         help="Minimum commnet length to be considered")
+    parser.add_argument('-e', '--evenbins', default=True, type=bool,
+                        required=False,
+                        help="Option to create an evenly split dataset")
     args = parser.parse_args()
     main()
