@@ -69,7 +69,7 @@ def main():
 
 
 if __name__ == '__main__':
-    # Defaults generate ~50MB of data
+    # Defaults generate ~50MB of data, 384K datapoints
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--datapath', required=True,
                         help="Path to data file")
