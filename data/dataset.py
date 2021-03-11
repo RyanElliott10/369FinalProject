@@ -32,6 +32,7 @@ class ChunkProcesser(object):
         rel_chunk = self._get_relevant_chunk_data(chunk).head(10)
         filtered_chunk = self._filter_chunk(rel_chunk)
         filtered_chunk[self.sentiment_cols] = filtered_chunk.body.apply(self._get_sentiment)
+        print(filtered_chunk)
 
 
 def process_data(path: str, chunksize: int, comm_length: int):
