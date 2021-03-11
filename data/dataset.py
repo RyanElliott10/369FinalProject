@@ -46,9 +46,9 @@ class ChunkProcesser(object):
         the file.
         """
         if self.has_written:
-            chunk.to_csv(self.output_path, mode='a', header=False)
+            chunk.to_csv(self.output_path, mode='a', header=False, index=False)
         else:
-            chunk.to_csv(self.output_path)
+            chunk.to_csv(self.output_path, index=False)
             self.has_written = True
 
     def create_even_bins(self):
@@ -56,16 +56,14 @@ class ChunkProcesser(object):
         data['bin'] = data['compound'].apply(
             lambda val: -1 if val <= -0.333 else (0 if val < 0.333 else 1))
         min_count = data.groupby(by='bin').count()['compound'].min()
-        data.groupby(by='bin').head(min_count).to_csv(self.output_path)
+        data.groupby(by='bin').head(min_count).to_csv(self.output_path,
+                                                      index=False)
 
     def __call__(self, chunk: pd.DataFrame):
         rel_chunk = self._get_relevant_chunk_data(chunk)
         filtered_chunk = self._filter_chunk(rel_chunk)
         filtered_chunk[self.sentiment_cols] = filtered_chunk.body.apply(
             self._get_sentiment)
-        # Since we have such a massive dataset, I think we should selectively
-        # remove datapoints to try to get an even spread of neg, neu, and pos
-        # datapoints
         self._save_chunk(filtered_chunk)
 
 

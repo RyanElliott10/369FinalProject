@@ -1,3 +1,6 @@
 *.class
 *.log
 *.csv
+.vscode/*
+project/*
+target/*
