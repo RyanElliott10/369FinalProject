@@ -8,13 +8,22 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd._
 import org.apache.log4j.{ Logger, Level }
-import org.apache.spark.ml.classification.{ RandomForestClassificationModel, RandomForestClassifier, NaiveBayes }
+import org.apache.spark.ml.classification.{
+  RandomForestClassificationModel,
+  RandomForestClassifier,
+  NaiveBayes
+}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{ HashingTF, IDF, Tokenizer, StopWordsRemover }
+import org.apache.spark.ml.feature.{
+  HashingTF,
+  IDF,
+  Tokenizer,
+  StopWordsRemover
+}
 import org.apache.spark.ml.{ Pipeline, PipelineModel }
 
 package object consts {
-  val minCommentLen = 50
+  val minCommentLen = 25
   val maxTokenLen = 15
 }
 
@@ -78,7 +87,9 @@ object App {
         }
         case _ => null
       }
-    }.filter(line => line != null && line._2.length > 0)
+    }.filter{line =>
+      line != null && line._2.length > consts.minCommentLen
+    }
 
     val vocabSize = rdd.flatMap(_._2).collect.toSet.size
     var bestModel: (Double, PipelineModel, Int) = (1.0, null, 0)
