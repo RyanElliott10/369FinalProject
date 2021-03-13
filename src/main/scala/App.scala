@@ -29,6 +29,7 @@ package object consts {
   val negativeLabel = 0
   val positiveLabel = 1
   val neutralLabel = 2
+  val numTrees = 32
 }
 
 object SentimentType extends Enumeration {
@@ -98,52 +99,43 @@ object App {
     }
 
     val vocabSize = rdd.flatMap(_._2).collect.toSet.size
-    var bestModel: (Double, PipelineModel, Int) = (1.0, null, 0)
 
-    (32 to 256 by 32).foreach{trees =>
-      val tokenizer = new Tokenizer()
-        .setInputCol("comment")
-        .setOutputCol("tokens")
-      val stopWordsRemover = new StopWordsRemover()
-        .setInputCol("tokens")
-        .setOutputCol("tokensNoStop")
-      val hashingTF = new HashingTF()
-        .setInputCol("tokensNoStop")
-        .setOutputCol("rawFeatures")
-        .setNumFeatures(vocabSize)
-      val idf = new IDF()
-        .setInputCol("rawFeatures")
-        .setOutputCol("features")
-      val rf = new RandomForestClassifier()
-        .setLabelCol("label")
-        .setFeaturesCol("features")
-        .setNumTrees(trees)
-      val pipeline = new Pipeline()
-        .setStages(Array(tokenizer, stopWordsRemover, hashingTF, idf, rf))
+    val tokenizer = new Tokenizer()
+      .setInputCol("comment")
+      .setOutputCol("tokens")
+    val stopWordsRemover = new StopWordsRemover()
+      .setInputCol("tokens")
+      .setOutputCol("tokensNoStop")
+    val hashingTF = new HashingTF()
+      .setInputCol("tokensNoStop")
+      .setOutputCol("rawFeatures")
+      .setNumFeatures(vocabSize)
+    val idf = new IDF()
+      .setInputCol("rawFeatures")
+      .setOutputCol("features")
+    val rf = new RandomForestClassifier()
+      .setLabelCol("label")
+      .setFeaturesCol("features")
+      .setNumTrees(consts.numTrees)
+    val pipeline = new Pipeline()
+      .setStages(Array(tokenizer, stopWordsRemover, hashingTF, idf, rf))
 
-      val commentData = spark.createDataFrame(rdd).toDF("label", "comment")
-      val Array(trainSet, testSet) = commentData.randomSplit(Array(0.8, 0.2), seed=42)
+    val commentData = spark.createDataFrame(rdd).toDF("label", "comment")
+    val Array(trainSet, testSet) = commentData.randomSplit(Array(0.8, 0.2), seed=42)
 
-      val model = pipeline.fit(trainSet)
-      val predictions = model.transform(testSet)
+    val model = pipeline.fit(trainSet)
+    val predictions = model.transform(testSet)
 
-      predictions.select("prediction", "label", "comment").show()
+    predictions.select("prediction", "label", "comment").show()
 
-      val evaluator = new MulticlassClassificationEvaluator()
-        .setLabelCol("label")
-        .setPredictionCol("prediction")
-        .setMetricName("accuracy")
-      val accuracy = evaluator.evaluate(predictions)
+    val evaluator = new MulticlassClassificationEvaluator()
+      .setLabelCol("label")
+      .setPredictionCol("prediction")
+      .setMetricName("accuracy")
+    val accuracy = evaluator.evaluate(predictions)
 
-      val testError = 1.0 - accuracy
-      if (testError < (bestModel._1)) {
-        println("New Best Model")
-        bestModel = (testError, model, trees)
-      }
-      println(s"${trees} - Test Error = ${testError}")
-    }
-
-    println(s"Best Model: ${bestModel._3} Trees, ${round(bestModel._1*100)}% Error")
-    bestModel._2.write.overwrite.save("models/random_forest.model")
+    val testError = 1.0 - accuracy
+    println(s"Model Error: ${round(testError*100)}%")
+    model.write.overwrite.save("models/random_forest.model")
   }
 }
