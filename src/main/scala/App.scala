@@ -25,6 +25,10 @@ import org.apache.spark.ml.{ Pipeline, PipelineModel }
 package object consts {
   val minCommentLen = 25
   val maxTokenLen = 15
+  val sentimentThreshold = 0.5
+  val negativeLabel = 0
+  val positiveLabel = 1
+  val neutralLabel = 2
 }
 
 object SentimentType extends Enumeration {
@@ -34,9 +38,9 @@ object SentimentType extends Enumeration {
   case class SentimentTypeValue(sentiment: Value) {
     def findBinContinuous(compound: Float): Value = {
       compound match {
-        case x if (-1 <= x && x <= -0.33) => Negative
-        case x if (-0.33 < x && x <= 0.33) => Neutral
-        case x if (0.33 < x && x <= 1) => Positive
+        case x if (-1 <= x && x <= -consts.sentimentThreshold) => Negative
+        case x if (-consts.sentimentThreshold < x && x <= consts.sentimentThreshold) => Neutral
+        case x if (consts.sentimentThreshold < x && x <= 1) => Positive
       }
     }
   }
@@ -65,6 +69,8 @@ object App {
     // Dictionary source from local
     val englishDict = scala.io.Source.fromFile("/usr/share/dict/web2").getLines.toSet
 
+    // The current filter removes neutral sentiment; only predicts positive and
+    // negative sentiment
     val rdd: RDD[(Int, String)] = sc.textFile(args(0)).map{line =>
       val sp = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)")
       sp.length match {
@@ -76,9 +82,9 @@ object App {
               .filter(tok => englishDict.contains(tok))
               .mkString(" ")
             val compound = sp(6).trim.toDouble match {
-              case x if (-1 <= x && x <= -0.5) => 0
-              case x if (0.5 < x && x <= 1) => 1
-              case _ => 2
+              case x if (-1 <= x && x <= -consts.sentimentThreshold) => consts.negativeLabel
+              case x if (consts.sentimentThreshold < x && x <= 1) => consts.positiveLabel
+              case _ => consts.neutralLabel
             }
             (compound, doc)
           } else {
@@ -88,7 +94,7 @@ object App {
         case _ => null
       }
     }.filter{line =>
-      line != null && line._2.length > consts.minCommentLen
+      line != null &&line._2.length > consts.minCommentLen && line._1 != consts.neutralLabel
     }
 
     val vocabSize = rdd.flatMap(_._2).collect.toSet.size
