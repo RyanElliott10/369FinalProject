@@ -18,12 +18,14 @@ import org.apache.spark.ml.feature.{
   HashingTF,
   IDF,
   Tokenizer,
-  StopWordsRemover
+  StopWordsRemover,
+  Word2Vec,
+  NGram
 }
 import org.apache.spark.ml.{ Pipeline, PipelineModel }
 
 package object consts {
-  val minCommentLen = 25
+  val minCommentLen = 10
   val maxTokenLen = 15
   val sentimentThreshold = 0.5
   val negativeLabel = 0
@@ -67,11 +69,7 @@ object App {
     val sc = new SparkContext(conf)
     val spark: SparkSession = SparkSession.builder.config(conf).getOrCreate()
 
-    // Dictionary source from local
-    val englishDict = scala.io.Source.fromFile("/usr/share/dict/web2").getLines.toSet
-
-    // The current filter removes neutral sentiment; only predicts positive and
-    // negative sentiment
+    // The current filter removes neutral sentiment; only predicts positive and negative sentiment
     val rdd: RDD[(Int, String)] = sc.textFile(args(0)).map{line =>
       val sp = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)")
       sp.length match {
@@ -80,7 +78,7 @@ object App {
             val doc = sp(0)
               .replaceAll("[^A-Za-z0-9 ]", "")
               .split(" ")
-              .filter(tok => englishDict.contains(tok))
+              .filter(_.length <= consts.maxTokenLen)
               .mkString(" ")
             val compound = sp(6).trim.toDouble match {
               case x if (-1 <= x && x <= -consts.sentimentThreshold) => consts.negativeLabel
@@ -95,7 +93,7 @@ object App {
         case _ => null
       }
     }.filter{line =>
-      line != null &&line._2.length > consts.minCommentLen && line._1 != consts.neutralLabel
+      line != null && line._2.length > consts.minCommentLen && line._1 != consts.neutralLabel
     }
 
     val vocabSize = rdd.flatMap(_._2).collect.toSet.size
@@ -106,6 +104,7 @@ object App {
     val stopWordsRemover = new StopWordsRemover()
       .setInputCol("tokens")
       .setOutputCol("tokensNoStop")
+
     val hashingTF = new HashingTF()
       .setInputCol("tokensNoStop")
       .setOutputCol("rawFeatures")
@@ -113,12 +112,26 @@ object App {
     val idf = new IDF()
       .setInputCol("rawFeatures")
       .setOutputCol("features")
+
+    val ngram = new NGram()
+      .setInputCol("tokens")
+      .setOutputCol("bigrams")
+      .setN(2)
+
+    val word2vec = new Word2Vec()
+      .setInputCol("tokens")
+      .setOutputCol("features")
+      .setVectorSize(256)
+      .setWindowSize(5)
+      .setMinCount(0)
+
     val rf = new RandomForestClassifier()
       .setLabelCol("label")
       .setFeaturesCol("features")
       .setNumTrees(consts.numTrees)
+
     val pipeline = new Pipeline()
-      .setStages(Array(tokenizer, stopWordsRemover, hashingTF, idf, rf))
+      .setStages(Array(tokenizer, stopWordsRemover, word2vec, rf))
 
     val commentData = spark.createDataFrame(rdd).toDF("label", "comment")
     val Array(trainSet, testSet) = commentData.randomSplit(Array(0.8, 0.2), seed=42)
@@ -126,7 +139,7 @@ object App {
     val model = pipeline.fit(trainSet)
     val predictions = model.transform(testSet)
 
-    predictions.select("prediction", "label", "comment").show()
+    predictions.select("prediction", "label", "comment").show(20, false)
 
     val evaluator = new MulticlassClassificationEvaluator()
       .setLabelCol("label")
