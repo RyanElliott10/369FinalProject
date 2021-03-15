@@ -56,14 +56,16 @@ class ChunkProcesser(object):
         data['bin'] = data['compound'].apply(
             lambda val: -1 if val <= -0.333 else (0 if val < 0.333 else 1))
         min_count = data.groupby(by='bin').count()['compound'].min()
-        data.groupby(by='bin').head(min_count).to_csv(self.output_path,
-                                                      index=False)
+        data.groupby(by='bin').head(min_count).to_csv(
+            self.output_path, index=False
+        )
 
     def __call__(self, chunk: pd.DataFrame):
         rel_chunk = self._get_relevant_chunk_data(chunk)
         filtered_chunk = self._filter_chunk(rel_chunk)
         filtered_chunk[self.sentiment_cols] = filtered_chunk.body.apply(
-            self._get_sentiment)
+            self._get_sentiment
+        )
         self._save_chunk(filtered_chunk)
 
 
@@ -74,8 +76,10 @@ def process_data(
         comm_length: int,
         evenbins: bool
 ):
-    processor = ChunkProcesser(output_path, min_comm_len=comm_length,
-                               chunksize=chunksize, evenbins=evenbins)
+    processor = ChunkProcesser(
+        output_path, min_comm_len=comm_length, chunksize=chunksize,
+        evenbins=evenbins
+    )
     for (i, chunk) in enumerate(pd.read_csv(path, chunksize=chunksize)):
         processor(chunk)
         if i == 50:
@@ -87,24 +91,32 @@ def process_data(
 
 def main():
     global args
-    process_data(args.datapath, args.output_path, chunksize=args.chunksize,
-                 comm_length=args.comm_length, evenbins=args.evenbins)
+    process_data(
+        args.datapath, args.output_path, chunksize=args.chunksize,
+        comm_length=args.comm_length, evenbins=args.evenbins
+    )
 
 
 if __name__ == '__main__':
     # Defaults generate ~50MB of data, 384K datapoints without even binning
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--datapath', required=True,
-                        help="Path to data file")
-    parser.add_argument('-o', '--output_path', required=True,
-                        help="Output file for dataset")
-    parser.add_argument('-c', '--chunksize', required=False, type=int,
-                        default=10000, help="Chunksize to parse data")
-    parser.add_argument('-l', '--comm_length', required=False, type=int,
-                        default=16,
-                        help="Minimum commnet length to be considered")
-    parser.add_argument('-e', '--evenbins', default=True, type=bool,
-                        required=False,
-                        help="Option to create an evenly split dataset")
+    parser.add_argument(
+        '-d', '--datapath', required=True, help="Path to data file"
+    )
+    parser.add_argument(
+        '-o', '--output_path', required=True, help="Output file for dataset"
+    )
+    parser.add_argument(
+        '-c', '--chunksize', required=False, type=int, default=10000,
+        help="Chunksize to parse data"
+    )
+    parser.add_argument(
+        '-l', '--comm_length', required=False, type=int, default=16,
+        help="Minimum commnet length to be considered"
+    )
+    parser.add_argument(
+        '-e', '--evenbins', default=True, type=bool, required=False,
+        help="Option to create an evenly split dataset"
+    )
     args = parser.parse_args()
     main()
