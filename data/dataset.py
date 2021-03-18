@@ -1,10 +1,10 @@
+from nltk.sentiment import SentimentIntensityAnalyzer
+import pandas as pd
 import argparse
 import warnings
 from typing import Dict
 
 warnings.simplefilter(action='ignore', category=Warning)  # Not the best
-import pandas as pd
-from nltk.sentiment import SentimentIntensityAnalyzer
 
 analyzer = SentimentIntensityAnalyzer()
 
@@ -22,7 +22,7 @@ class ChunkProcesser(object):
         self.output_path = output_path
         self.chunksize = chunksize
         self.min_comm_len = min_comm_len
-        self.evenbins = evenbins;
+        self.evenbins = evenbins
         self.desired_cols = ['body', 'gildings', 'subreddit']
         self.sentiment_cols = ['neg', 'neu', 'pos', 'compound']
         self.has_written = False
@@ -34,8 +34,8 @@ class ChunkProcesser(object):
     def _filter_chunk(self, chunk: pd.DataFrame) -> pd.DataFrame:
         """Filters comments within a chunk to meet requirements."""
         chunk.body = chunk.dropna().body.astype('str')
-        return chunk[
-            chunk.body.map(lambda el: len(str(el))) >= self.min_comm_len]
+        getLen = lambda x: len(str(x))
+        return chunk[chunk.body.map(getLen) >= self.min_comm_len]
 
     def _get_relevant_chunk_data(self, chunk: pd.DataFrame) -> pd.DataFrame:
         return chunk[self.desired_cols]
@@ -54,7 +54,8 @@ class ChunkProcesser(object):
     def create_even_bins(self):
         data = pd.read_csv(self.output_path)
         data['bin'] = data['compound'].apply(
-            lambda val: -1 if val <= -0.333 else (0 if val < 0.333 else 1))
+            lambda val: -1 if val <= -0.333 else (0 if val < 0.333 else 1)
+        )
         min_count = data.groupby(by='bin').count()['compound'].min()
         data.groupby(by='bin').head(min_count).to_csv(
             self.output_path, index=False
