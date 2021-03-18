@@ -198,8 +198,8 @@ object App {
 
     val figure = Figure()
       .plot(p)
-      .title("AMRN 1 month price history")
+      .title(labels(0) + "price history")
 
-    draw(p, "basic-scatter", writer.FileOptions(overwrite=true))
+    draw(p, labels(0) + " chart", writer.FileOptions(overwrite=true))
   }
 }
