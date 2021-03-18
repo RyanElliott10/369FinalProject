@@ -1,6 +1,7 @@
 *.class
 *.log
 *.csv
+*.png
 .vscode/*
 project/*
 target/*

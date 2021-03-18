@@ -34,7 +34,7 @@ class ChunkProcesser(object):
     def _filter_chunk(self, chunk: pd.DataFrame) -> pd.DataFrame:
         """Filters comments within a chunk to meet requirements."""
         chunk.body = chunk.dropna().body.astype('str')
-        getLen = lambda x: len(str(x))
+        def getLen(x): return len(str(x))
         return chunk[chunk.body.map(getLen) >= self.min_comm_len]
 
     def _get_relevant_chunk_data(self, chunk: pd.DataFrame) -> pd.DataFrame:

@@ -71,9 +71,6 @@ object App {
       .title("AMRN 1 month price history")
 
     draw(p, "basic-scatter", writer.FileOptions(overwrite=true))
-
-
-
   }
 
 }

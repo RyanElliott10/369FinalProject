@@ -1,0 +1,31 @@
+04-03-2021
+    * (45 minutes) Adam and Ryan met to finalize the project details and decide who was doing what
+
+06-03-2021
+    * (1 hour) Ryan began looking for datasets, narrowing the choices down to a handful
+
+07-03-2021
+    * (30 minutes) Adam and Ryan met to discuss dataset options and decide upon which would be suitable
+    * (45 minutes) Adam took a deeper look into the dataset we decided upon and began to find malformatting issues
+
+09-03-2021
+    * (1.5 hours) Ryan began writing a parser for the initial dataset to develop a dataset that could be feasibly used
+
+10-03-2021
+    * (2 hours) Ryan began work on developing the NLP/sentiment analysis model to be used for visualization
+
+12-03-2021
+    * (3.5 hours) Ryan finished up development of the model and was largely able to graph sentiment over time
+
+13-03-2021
+    * (1.5 hours) Ryan finished the graphing of sentiment and tweaked the model to use word2vec for improved accuracy
+
+16-03-2021
+    * (2 hours) Adam and Ryan began working on the report and slides in unison
+        * We began producing meaningful visuals and developed the structure for our slides
+
+17-03-2021
+    * (1.5 hours) Finished the slide deck and focused on generating a meaningful report
+
+18-3-2021
+    * (2 hours) Adam and Ryan finished the report, made final tweaks to the slide deck, and rehearsed our presentation

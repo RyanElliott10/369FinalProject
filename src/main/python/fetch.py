@@ -5,7 +5,6 @@ import requests
 import os
 
 
-
 def parseTime(inputdata):
     timestamps = []
 
@@ -24,8 +23,10 @@ def parseTime(inputdata):
 
 def parseValues(inputdata):
     values = []
-    values.extend(inputdata["chart"]["result"][0]["indicators"]["quote"][0]["open"])
-    values.extend(inputdata["chart"]["result"][0]["indicators"]["quote"][0]["close"])
+    values.extend(inputdata["chart"]["result"][0]
+                  ["indicators"]["quote"][0]["open"])
+    values.extend(inputdata["chart"]["result"][0]
+                  ["indicators"]["quote"][0]["close"])
 
     return values
 
@@ -33,16 +34,15 @@ def parseValues(inputdata):
 # add market open/close attribute
 def attachEvents(inputdata):
 
-  eventlist = []
+    eventlist = []
 
-  for i in range(0,len(inputdata["chart"]["result"][0]["timestamp"])):
-    eventlist.append("open")
+    for i in range(0, len(inputdata["chart"]["result"][0]["timestamp"])):
+        eventlist.append("open")
 
-  for i in range(0,len(inputdata["chart"]["result"][0]["timestamp"])):
-    eventlist.append("close")
+    for i in range(0, len(inputdata["chart"]["result"][0]["timestamp"])):
+        eventlist.append("close")
 
-  return eventlist
-
+    return eventlist
 
 
 # usage = $ python2 fetch.py <interval> <symbol> <range> <region> <time>
@@ -52,7 +52,6 @@ def attachEvents(inputdata):
 #  region values = {US, BR, AU, etc...}
 
 def main():
-
     # account specific values
     RAPIDAPI_KEY = "883de80fefmsh5ce969c2da68157p16b45djsndddadb019c2c"
     RAPIDAPI_HOST = "apidojo-yahoo-finance-v1.p.rapidapi.com"
@@ -64,12 +63,13 @@ def main():
     range = sys.argv[3]
     region = sys.argv[4].upper()
 
-    querystring = {"interval": interval, "symbol": symbol, "range": range, "region": region}
-    headers = {'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': RAPIDAPI_HOST}
+    querystring = {"interval": interval, "symbol": symbol,
+                   "range": range, "region": region}
+    headers = {'x-rapidapi-key': RAPIDAPI_KEY,
+               'x-rapidapi-host': RAPIDAPI_HOST}
 
-
-    response = (requests.request("GET", url, headers=headers, params=querystring)).json()
-
+    response = (requests.request(
+        "GET", url, headers=headers, params=querystring)).json()
 
     data = pd.DataFrame()
 
@@ -77,7 +77,6 @@ def main():
         data["TimeStamp"] = parseTime(response)
         data["Values"] = parseValues(response)
         data["Events"] = attachEvents(response)
-
 
     # write to specified output directory
     path = os.getcwd() + "/stockData/output.csv"
@@ -91,8 +90,5 @@ def main():
     file.close()
 
 
-
-
-if __name__== '__main__':
+if __name__ == '__main__':
     main()
-
