@@ -16,13 +16,19 @@
 
 12-03-2021
     * (3.5 hours) Ryan finished up development of the model and was largely able to graph sentiment over time
+    * (2 hours) Adam makes api client to fetch customizable financial data and store it in a dataset for future analysis  
 
 13-03-2021
     * (1.5 hours) Ryan finished the graphing of sentiment and tweaked the model to use word2vec for improved accuracy
+    * (2 hours) Adam develops an interactive, bespoke time series visualizer for the financial data 
+
 
 16-03-2021
     * (2 hours) Adam and Ryan began working on the report and slides in unison
         * We began producing meaningful visuals and developed the structure for our slides
+        
+16-03-2021
+    * (1 hour) Adam generates visuals and analyzes historical stock data to test efficacy and clarity of program
 
 17-03-2021
     * (1.5 hours) Finished the slide deck and focused on generating a meaningful report
