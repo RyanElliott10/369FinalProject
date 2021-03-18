@@ -28,7 +28,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.{ SparkConf, SparkContext }
 
 import co.theasi.plotly._
-import co.theasi.plotly.{Plot, draw, writer}
+import co.theasi.plotly.{ Plot, draw, writer }
 
 package object consts {
   val minCommentLen = 10
@@ -177,7 +177,6 @@ object App {
       val diff = 10.0*(x._2._1/start - 1).setScale(4, BigDecimal.RoundingMode.HALF_UP)
       (x._1 + " : " + diff.toString() + "%", x._2 )
     })
-
 
     val ytest = data.map(x => x._2._1).collect
     val xtest = (1 to (ytest.length-1).toInt).toList
